@@ -1,6 +1,8 @@
-int main(int argc, char** argv) { HOGDescriptor hog;
-Hog.winSize = Size(64,128); # Training size of the samples used
-# Define variables and define valid extensions#
+int main(int argc, char** argv) 
+{ HOGDescriptor hog;
+Hog.winSize = Size(64,128); 
+# Training size of the samples used #
+# Define variables and define valid extensions #
 static vector<string> positiveTrainingImages; 
 static vector<string> negativeTrainingImages; 
 static vector<string> validExtensions; 
