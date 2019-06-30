@@ -1,0 +1,17 @@
+import cv2 
+import numpy as np 
+car_cascade = cv2.CascadeClassifier('cars2.xml') 
+cap = cv2.VideoCapture(0) 
+while (True):           
+(grabbed, frame) = camera.read() 
+gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
+cars = car_cascade.detectMultiScale(gray, 1.05, 2) for (x, y, w, h) in cars:
+cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+roi_gray = gray[y:y + h, x:x + w] 
+roi_color = frame[y:y + h, x:x + w]
+cv2.imshow('Display_output, frame)
+k = cv2.waitKey(30) & 0xFF
+if k == 27:         
+break 
+cap.release() 
+cv2.destroyAllWindows() 
