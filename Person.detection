@@ -1,0 +1,85 @@
+int main(int argc, char** argv) { HOGDescriptor hog;
+Hog.winSize = Size(64,128); # Training size of the samples used
+# Define variables and define valid extensions#
+static vector<string> positiveTrainingImages; 
+static vector<string> negativeTrainingImages; 
+static vector<string> validExtensions; 
+validExtensions.push_back("jpg"); 
+validExtensions.push_back("png"); 
+validExtensions.push_back("ppm");
+#Read image files from directory defined earlier#
+getFilesInDirectory(posSamplesDir, positiveTrainingImages, validExtensions);
+getFilesInDirectory(negSamplesDir, negativeTrainingImages, validExtensions);
+# Retrieve the descriptor vectors from the samples#
+Unsigned long overallSamples = positiveTrainingImages.size() +  negativeTrainingImages.size();
+# Make sure there are actually samples to train#
+if (overallSamples == 0) {
+printf("No training sample files found, nothing to do!\n"); return EXIT_SUCCESS;
+}
+fstream File;     
+File.open(featuresFile.c_str(), ios::out);     
+if (File.good() && File.is_open()) {         
+# Iterate over sample images         
+for (unsigned long currentFile = 0; currentFile < overallSamples; ++currentFile) {             
+storeCursor();             
+vector<float> featureVector; 
+# Get positive or negative sample image file path# 
+const string currentImageFile = (currentFile < positiveTrainingImages.size() ? positiveTrainingImages.at(currentFile) : negativeTrainingImages.at(currentFile - positiveTrainingImages.size())); 
+# Output                        
+if ( (currentFile+1) % 10 == 0 || (currentFile+1) == overallSamples ) {                 
+percent = ((currentFile+1) * 100 / overallSamples);
+# Calculate feature vector from current image file  
+calculateFeaturesFromInput(currentImageFile, featureVector, hog);
+if (!featureVector.empty()) {               
+# Put positive or negative sample class to file,
+* true=positive, false=negative,
+* and convert positive class to +1 and negative class to -1 for SVMlight 
+*/#
+File << ((currentFile < positiveTrainingImages.size()) ? "+1" : "-1");
+// Save feature vector components
+for (unsigned int feature = 0; feature < featureVector.size(); ++feature) {
+File << " " << (feature + 1) << ":" << featureVector.at(feature);
+}   
+File << endl;
+}         
+}
+printf("\n");
+File.flush(); 
+File.close();
+} else {  
+printf("Error opening file '%s'!\n", featuresFile.c_str());
+return EXIT_FAILURE;     
+}
+# Read in and train the calculated feature vectors #
+printf("Calling SVMlight\n");
+SVMlight::getInstance()->read_problem(const_cast<char*> (featuresFile.c_str()));
+SVMlight::getInstance()->train();
+ # Calling the SVMlight module for training  #
+ printf("Training done, saving model file!\n");
+ SVMlight::getInstance()->saveModelToFile(svmModelFile); 
+ printf("Generating representative single HOG feature vector using svmlight!\n");
+ vector<float> descriptorVector;
+ vector<unsigned int> descriptorVectorIndices;
+ SVMlight::getInstance()->getSingleDetectingVector(descriptorVector, descriptorVectorIndices); 
+ # save the positive to file system #
+ saveDescriptorVectorToFile(descriptorVector,descriptorVectorIndices,  descriptorVectorFile); 
+ printf("Testing custom detection using camera\n");    
+ hog.setSVMDetector(descriptorVector);      
+ VideoCapture cap(0);
+ # open the default camera #
+ if(!cap.isOpened()) { 
+ # check if code is working #
+ printf("Error opening camera!\n");
+ return EXIT_FAILURE; 
+ }
+ Mat testImage;
+ while ((cvWaitKey(10) & 255) != 27) {
+ cap >> testImage; 
+ # get a new frame from camera #
+ cvtColor(testImage, testImage, CV_BGR2GRAY);
+ # train on grey scale image #
+ detectTest(hog, testImage);   
+ imshow("HOG custom detection", testImage); 
+ }
+ return EXIT_SUCCESS;
+ }
