@@ -1,0 +1,11 @@
+# reate directories for sample negative and positive images #
+$~ mkdir Haar_cascade 
+$~ cd Haar_cascade 
+# Check for the sample images in required format and sizes #
+$~ find pos -iname “*.jpeg” -exec echo/{/} 1 0 0 100 140;>cars.info 
+$~ find neg -iname “*.jpeg”> bg.txt
+# Create a vector file to train the cascade #
+$~ opencv_createsamples -info cars.info -num 550 -w 48 -h 24 -vec cars.vec 
+# Train the cascade #
+$~ opencv_traincascade -data data -vec cars.vec -bg bg.txt -numStages 20 -nsplits 2 minhitrate 0.999 -maxfalsealarm 0.5 -numPos 500 -numNeg 1000 -w 48 -h 24 
+# Can train the cascade multiple times to get the better accuracy and efficiency #
